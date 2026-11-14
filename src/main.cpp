@@ -38,6 +38,9 @@ float gyro_offset_y = 0;
 float roll = 0;
 float pitch = 0;
 
+static constexpr int CALIB_SAMPLES = 500;
+static constexpr int CALIB_INTERVAL_MS = 10;
+
 unsigned long last_sample_time = 0;
 unsigned long last_display_time = 0;
 
@@ -78,7 +81,7 @@ void calibrateGyro() {
     long sum_y = 0;
     int  valid  = 0;
 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < CALIB_SAMPLES; i++) {
         int16_t ax, ay, az, gx, gy, gz;
 
         if (readMPU6050(ax, ay, az, gx, gy, gz)) {
@@ -87,16 +90,27 @@ void calibrateGyro() {
             valid++;
         }
 
-        delay(10);
+        delay(CALIB_INTERVAL_MS);
+    }
+
+    if (valid == 0) {
+        Serial.println("Calibration FAILED: no sample read from MPU6050.");
+        Serial.println("Check wiring, 3V3 power and I2C address (0x68).");
+        return;
     }
 
     // 只对成功读到的样本求平均，避免失败样本把零偏拉向 0
-    if (valid > 0) {
-        gyro_offset_x = (float)sum_x / (float)valid;
-        gyro_offset_y = (float)sum_y / (float)valid;
-    }
+    gyro_offset_x = (float)sum_x / (float)valid;
+    gyro_offset_y = (float)sum_y / (float)valid;
 
-    Serial.println("Calibration complete.");
+    Serial.printf(
+        "Calibration done: %d/%d samples, offset x=%.2f y=%.2f\n",
+        valid, CALIB_SAMPLES, gyro_offset_x, gyro_offset_y
+    );
+
+    if (valid < CALIB_SAMPLES / 2) {
+        Serial.println("Warning: too many failed samples, angle may drift.");
+    }
 }
 
 // ==================== Setup ====================

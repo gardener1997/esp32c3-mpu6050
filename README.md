@@ -90,7 +90,9 @@ pio device monitor -b 115200
 ## 常见问题
 
 - **OLED 显示 `OLED initialization failed!` 后卡住**：检查地址是否为 0x3C、SDA/SCL 是否接反、供电是否正常。
-- **角度一直是 0.00**：MPU6050 没有应答。确认 AD0 接地（0x68）、模块供电为 3.3V、I2C 上拉是否已存在（多数模块自带）。
+- **角度一直是 0.00**：MPU6050 没有应答，串口会打印 `Calibration FAILED: no sample read from MPU6050.`。
+  确认 AD0 接地（0x68）、模块供电为 3.3V、I2C 上拉是否已存在（多数模块自带）。
+- **串口提示 `too many failed samples`**：校准期间读取成功率偏低，检查接线/供电，或重新上电并保持静止。
 - **静置时角度缓慢漂移**：上电时没有保持静止导致零偏校准不准，重新上电并静置即可；也说明 `ALPHA` 偏大，可略微调小。
 - **数值抖动明显**：MPU6050 默认未开启 DLPF，可配置 `CONFIG`(0x1A) 打开低通滤波，或减小 `ALPHA`。
 - **串口没有输出**：确认 `monitor_speed = 115200` 与 USB 数据线（而非仅充电线）正常。
